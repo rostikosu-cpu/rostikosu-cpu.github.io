@@ -1,0 +1,418 @@
+```html
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Президенти України — Інтерактивна інфографіка</title>
+    <style>
+        /* Базові стилі та обнулення */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #f0f4f8;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Головний контейнер банера */
+        .banner-container {
+            width: 100%;
+            max-width: 1200px;
+            min-height: 550px;
+            background: linear-gradient(135deg, rgba(224, 242, 254, 0.6) 0%, rgba(254, 249, 195, 0.6) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 24px;
+            padding: 30px 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Блок заголовків */
+        .banner-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .banner-header h1 {
+            font-size: 2.5rem;
+            color: #1e3a8a;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        }
+
+        .banner-header p {
+            font-size: 1.1rem;
+            color: #4b5563;
+            font-weight: 500;
+        }
+
+        /* Сетка карток */
+        .presidents-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            width: 100%;
+            margin-bottom: 25px;
+        }
+
+        /* Обгортка картки (для фіксації підпису знизу) */
+        .card-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Контейнер самої картки */
+        .president-card {
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            position: relative;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+            transform: translateZ(0); /* Оптимізація анімації */
+        }
+
+        /* Фото президента */
+        .president-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease, filter 0.4s ease;
+        }
+
+        /* Стильний Placeholder на випадок помилки завантаження фото */
+        .avatar-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #3b82f6 0%, #eab308 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 15px;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 1.1rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Інтерактивний Overlay (Ефект Glassmorphism на темному фоні) */
+        .card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.75); /* Темний напівпрозорий фон */
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            opacity: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 15px;
+            color: #ffffff;
+            transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateY(10px);
+            pointer-events: none; /* Запобігає мерехтінню при ховері */
+        }
+
+        .overlay-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #fef08a; /* Жовтий акцент */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 5px;
+            width: 100%;
+        }
+
+        .overlay-years {
+            font-size: 0.9.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #93c5fd; /* Синій акцент */
+        }
+
+        .overlay-event {
+            font-size: 0.8rem;
+            line-height: 1.3;
+            font-weight: 400;
+        }
+
+        /* Статичний підпис прізвища під карткою */
+        .president-surname {
+            margin-top: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1e293b;
+            text-align: center;
+            transition: color 0.3s ease;
+        }
+
+        /* Ефекти при наведенні (Hover) та для активного стану на тач-скрінах */
+        @media (hover: hover) {
+            .president-card:hover {
+                transform: scale(1.06);
+                box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 0 0 30px rgba(234, 179, 8, 0.2);
+                border-color: rgba(59, 130, 246, 0.6);
+            }
+
+            .president-card:hover .president-img {
+                filter: brightness(0.5);
+                transform: scale(1.05);
+            }
+
+            .president-card:hover .card-overlay {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            .card-wrapper:hover .president-surname {
+                color: #2563eb;
+            }
+        }
+
+        /* Клас для підтримки кліків на мобільних пристроях */
+        .president-card.active {
+            transform: scale(1.06);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), 0 0 30px rgba(234, 179, 8, 0.2);
+            border-color: rgba(59, 130, 246, 0.6);
+        }
+
+        .president-card.active .president-img {
+            filter: brightness(0.5);
+        }
+
+        .president-card.active .card-overlay {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Нижній інформаційний блок */
+        .banner-footer {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            color: #334155;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+
+        /* Адаптивність (Медіа-запити) */
+        @media (max-width: 1024px) {
+            .presidents-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+            }
+            .banner-container {
+                min-height: auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .banner-header h1 {
+                font-size: 2rem;
+            }
+            .banner-header p {
+                font-size: 1rem;
+            }
+            .presidents-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            .overlay-name { font-size: 1rem; }
+            .overlay-years { font-size: 0.9rem; }
+            .overlay-event { font-size: 0.75rem; }
+        }
+
+        @media (max-width: 480px) {
+            .presidents-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .banner-header h1 {
+                font-size: 1.6rem;
+            }
+            .banner-footer {
+                font-size: 0.85rem;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="banner-container">
+        <div class="banner-header">
+            <h1>Президенти України</h1>
+            <p>Досягнення та провали кожного президента</p>
+        </div>
+
+        <div class="presidents-grid">
+            
+            <div class="card-wrapper">
+                <div class="president-card" tabindex="0">
+                    <img class="president-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Leonid_Kravchuk_2012.jpg/400px-Leonid_Kravchuk_2012.jpg" alt="Леонід Кравчук">
+                    <div class="card-overlay">
+                        <div class="overlay-name">Леонід Кравчук</div>
+                        <div class="overlay-years">1991–1994</div>
+                        <div class="overlay-event">Проголошення та утвердження незалежності України</div>
+                    </div>
+                </div>
+                <div class="president-surname">Кравчук</div>
+            </div>
+
+            <div class="card-wrapper">
+                <div class="president-card" tabindex="0">
+                    <img class="president-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/%D0%9B%D0%B5%D0%BE%D0%BD%D1%96%D0%B4_%D0%9A%D1%83%D1%87%D0%BC%D0%B0_%28%D1%83%D1%81%D0%BC%D1%96%D1%85%D0%BD%D1%94%D0%BD%D0%B8%D0%B9%29.jpg/400px-%D0%9B%D0%B5%D0%BE%D0%BD%D1%96%D0%B4_%D0%9A%D1%83%D1%87%D0%BC%D0%B0_%28%D1%83%D1%81%D0%BC%D1%96%D1%85%D0%BD%D1%94%D0%BD%D0%B8%D0%B9%29.jpg" alt="Леонід Кучма">
+                    <div class="card-overlay">
+                        <div class="overlay-name">Леонід Кучма</div>
+                        <div class="overlay-years">1994–2005</div>
+                        <div class="overlay-event">Ухвалення Конституції України 1996 року</div>
+                    </div>
+                </div>
+                <div class="president-surname">Кучма</div>
+            </div>
+
+            <div class="card-wrapper">
+                <div class="president-card" tabindex="0">
+                    <img class="president-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Viktor_Yushchenko_official_portrait.jpg/400px-Viktor_Yushchenko_official_portrait.jpg" alt="Віктор Ющенко">
+                    <div class="card-overlay">
+                        <div class="overlay-name">Віктор Ющенко</div>
+                        <div class="overlay-years">2005–2010</div>
+                        <div class="overlay-event">Помаранчева революція та курс на європейську інтеграцію</div>
+                    </div>
+                </div>
+                <div class="president-surname">Ющенко</div>
+            </div>
+
+            <div class="card-wrapper">
+                <div class="president-card" tabindex="0">
+                    <img class="president-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Viktor_Yanukovych_2010.jpg/400px-Viktor_Yanukovych_2010.jpg" alt="Віктор Янукович">
+                    <div class="card-overlay">
+                        <div class="overlay-name">Віктор Янукович</div>
+                        <div class="overlay-years">2010–2014</div>
+                        <div class="overlay-event">Євромайдан та Революція Гідності</div>
+                    </div>
+                </div>
+                <div class="president-surname">Янукович</div>
+            </div>
+
+            <div class="card-wrapper">
+                <div class="president-card" tabindex="0">
+                    <img class="president-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Petro_Poroshenko_official_portrait.jpg/400px-Petro_Poroshenko_official_portrait.jpg" alt="Петро Порошенко">
+                    <div class="card-overlay">
+                        <div class="overlay-name">Петро Порошенко</div>
+                        <div class="overlay-years">2014–2019</div>
+                        <div class="overlay-event">Безвізовий режим з ЄС та створення ПЦУ</div>
+                    </div>
+                </div>
+                <div class="president-surname">Порошенко</div>
+            </div>
+
+            <div class="card-wrapper">
+                <div class="president-card" tabindex="0">
+                    <img class="president-img" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Volodymyr_Zelensky_Official_portrait.jpg/400px-Volodymyr_Zelensky_Official_portrait.jpg" alt="Володимир Зеленський">
+                    <div class="card-overlay">
+                        <div class="overlay-name">Володимир Зеленський</div>
+                        <div class="overlay-years">2019–дотепер</div>
+                        <div class="overlay-event">Керівництво державою під час повномасштабної війни</div>
+                    </div>
+                </div>
+                <div class="president-surname">Зеленський</div>
+            </div>
+
+        </div>
+
+        <div class="banner-footer">
+            Наведіть курсор або натисніть на портрет президента, щоб переглянути роки правління та ключову історичну подію.
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.president-card');
+            const images = document.querySelectorAll('.president-img');
+
+            // 1. Обробка помилок завантаження зображень (Fallback)
+            images.forEach(img => {
+                img.addEventListener('error', function() {
+                    const card = this.closest('.president-card');
+                    const altText = this.getAttribute('alt') || 'Президент';
+                    
+                    // Видаляємо бите зображення
+                    this.remove();
+
+                    // Створюємо стильний placeholder
+                    const placeholder = document.createElement('div');
+                    placeholder.classList.add('avatar-placeholder');
+                    placeholder.innerText = altText;
+
+                    // Додаємо на початок картки, щоб overlay залишався зверху
+                    card.insertBefore(placeholder, card.firstChild);
+                });
+                
+                // Перевірка на випадок, якщо картинка вже закешована з помилкою
+                if (img.complete && img.naturalWidth === 0) {
+                    img.dispatchEvent(new Event('error'));
+                }
+            });
+
+            // 2. Логіка для мобільних пристроїв (Touch/Click Toggle)
+            cards.forEach(card => {
+                card.addEventListener('click', function(e) {
+                    // Якщо картка вже активна — закриваємо її
+                    if (this.classList.contains('active')) {
+                        this.classList.remove('active');
+                    } else {
+                        // Закриваємо всі інші відкриті картки
+                        cards.forEach(c => c.classList.remove('active'));
+                        // Відкриваємо поточну
+                        this.classList.add('active');
+                    }
+                    e.stopPropagation();
+                });
+            });
+
+            // Закриття overlay при кліку в будь-якому іншому місці екрана
+            document.addEventListener('click', () => {
+                cards.forEach(card => card.classList.remove('active'));
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+```
